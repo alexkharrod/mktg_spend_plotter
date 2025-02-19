@@ -66,9 +66,9 @@ output_path = os.path.join(output_dir, output_filename)
 # Prepare months for x-axis
 months = data_df.index
 
-# Create a multi-panel figure
-plt.figure(figsize=(25, 30))
-plt.subplots_adjust(hspace=0.4, wspace=0.3)
+# Create a multi-panel figure with larger size
+plt.figure(figsize=(30, 35))  # Increased from (25, 30)
+plt.subplots_adjust(hspace=0.5, wspace=0.3)  # Increased vertical spacing
 
 # Color palette for consistent coloring
 colors = plt.cm.Set1(np.linspace(0, 1, len(rows_to_track)))
@@ -77,12 +77,17 @@ colors = plt.cm.Set1(np.linspace(0, 1, len(rows_to_track)))
 for i, channel in enumerate(rows_to_track, 1):
     plt.subplot(5, 2, i)
 
-    # Plot the specific channel's performance
+    # Plot the specific channel's performance with thicker lines
     plt.plot(
-        months, data_df[channel], marker="o", label=channel, color="red", linewidth=2
+        months,
+        data_df[channel],
+        marker="o",
+        label=channel,
+        color="red",
+        linewidth=3,  # Increased linewidth
     )
 
-    # Plot ESP and Sage Spend on the same chart
+    # Plot ESP and Sage Spend on the same chart with thicker lines
     plt.plot(
         months,
         data_df["ESP Spend"],
@@ -90,6 +95,7 @@ for i, channel in enumerate(rows_to_track, 1):
         label="ESP Spend",
         color="blue",
         linestyle="--",
+        linewidth=3,  # Increased linewidth
     )
     plt.plot(
         months,
@@ -98,26 +104,31 @@ for i, channel in enumerate(rows_to_track, 1):
         label="Sage Spend",
         color="green",
         linestyle="--",
+        linewidth=3,  # Increased linewidth
     )
 
-    plt.title(f"{channel} Performance with Spend", fontsize=12, fontweight="bold")
-    plt.xlabel("Months", fontsize=10)
-    plt.ylabel("Value", fontsize=10)
-    plt.xticks(rotation=45)
+    plt.title(
+        f"{channel} Performance with Spend", fontsize=16, fontweight="bold"
+    )  # Increased from 12
+    plt.xlabel("Months", fontsize=14)  # Increased from 10
+    plt.ylabel("Value", fontsize=14)  # Increased from 10
+    plt.xticks(rotation=45, fontsize=12)  # Added fontsize
+    plt.yticks(fontsize=12)  # Added fontsize
     plt.grid(True, linestyle=":", alpha=0.7)
-    plt.legend()
+    plt.legend(fontsize=12)  # Added fontsize to legend
 
 plt.suptitle(
     "Marketing Channel Performance Alongside ESP and Sage Spend",
-    fontsize=16,
+    fontsize=20,  # Increased from 16
     fontweight="bold",
+    y=0.95,  # Adjusted position of main title
 )
 
 # Ensure output directory exists
 os.makedirs(output_dir, exist_ok=True)
 
-# Save the figure
-plt.savefig(output_path, bbox_inches="tight", dpi=300)
+# Save the figure with higher DPI
+plt.savefig(output_path, bbox_inches="tight", dpi=400)  # Increased DPI from 300
 print(f"File saved to: {output_path}")
 
 # Print summary statistics for each channel
