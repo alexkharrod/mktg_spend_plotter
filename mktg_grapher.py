@@ -46,90 +46,88 @@ first_date = str(month_columns[0])
 # Debug print to see what date we're starting with
 print("Original date from DataFrame:", first_date)
 
-# Create output filename with forced 2025 year
+# Create base output filename with forced 2025 year
 try:
-    # Parse the datetime
     date_obj = pd.to_datetime(first_date)
-    # Force the year to 2025 while keeping the original month
     month = date_obj.month
-    output_filename = f"adspend_vs_category_sales_{month:02d}-2025.png"
+    base_filename = f"adspend_vs_category_sales_{month:02d}-2025"
 except Exception as e:
     print(f"Date parsing error: {e}")
-    output_filename = "adspend_vs_category_sales.png"
-
-# Debug print to verify filename
-print(f"Generated filename: {output_filename}")
-
-# Full output path
-output_path = os.path.join(output_dir, output_filename)
+    base_filename = "adspend_vs_category_sales"
 
 # Prepare months for x-axis
 months = data_df.index
 
-# Create a multi-panel figure with larger size
-plt.figure(figsize=(30, 35))  # Increased from (25, 30)
-plt.subplots_adjust(hspace=0.5, wspace=0.3)  # Increased vertical spacing
+# Calculate number of pages needed (2 charts per page)
+charts_per_page = 2
+total_pages = (len(rows_to_track) + charts_per_page - 1) // charts_per_page
 
-# Color palette for consistent coloring
-colors = plt.cm.Set1(np.linspace(0, 1, len(rows_to_track)))
+# Create separate pages with 2 charts each
+for page in range(total_pages):
+    plt.figure(figsize=(20, 24))  # Adjusted for 2 charts per page
+    plt.subplots_adjust(hspace=0.3)
 
-# Create a subplot for each marketing channel
-for i, channel in enumerate(rows_to_track, 1):
-    plt.subplot(5, 2, i)
+    # Process 2 charts for current page
+    for i in range(charts_per_page):
+        chart_index = page * charts_per_page + i
+        if chart_index < len(rows_to_track):
+            channel = rows_to_track[chart_index]
 
-    # Plot the specific channel's performance with thicker lines
-    plt.plot(
-        months,
-        data_df[channel],
-        marker="o",
-        label=channel,
-        color="red",
-        linewidth=3,  # Increased linewidth
+            plt.subplot(2, 1, i + 1)
+
+            # Plot the specific channel's performance
+            plt.plot(
+                months,
+                data_df[channel],
+                marker="o",
+                label=channel,
+                color="red",
+                linewidth=3,
+            )
+
+            # Plot ESP and Sage Spend
+            plt.plot(
+                months,
+                data_df["ESP Spend"],
+                marker="o",
+                label="ESP Spend",
+                color="blue",
+                linestyle="--",
+                linewidth=3,
+            )
+            plt.plot(
+                months,
+                data_df["Sage Spend"],
+                marker="o",
+                label="Sage Spend",
+                color="green",
+                linestyle="--",
+                linewidth=3,
+            )
+
+            plt.title(
+                f"{channel} Performance with Spend", fontsize=18, fontweight="bold"
+            )
+            plt.xlabel("Months", fontsize=16)
+            plt.ylabel("Value", fontsize=16)
+            plt.xticks(rotation=45, fontsize=14)
+            plt.yticks(fontsize=14)
+            plt.grid(True, linestyle=":", alpha=0.7)
+            plt.legend(fontsize=14)
+
+    plt.suptitle(
+        "Marketing Channel Performance Alongside ESP and Sage Spend",
+        fontsize=22,
+        fontweight="bold",
+        y=0.95,
     )
 
-    # Plot ESP and Sage Spend on the same chart with thicker lines
-    plt.plot(
-        months,
-        data_df["ESP Spend"],
-        marker="o",
-        label="ESP Spend",
-        color="blue",
-        linestyle="--",
-        linewidth=3,  # Increased linewidth
-    )
-    plt.plot(
-        months,
-        data_df["Sage Spend"],
-        marker="o",
-        label="Sage Spend",
-        color="green",
-        linestyle="--",
-        linewidth=3,  # Increased linewidth
-    )
-
-    plt.title(
-        f"{channel} Performance with Spend", fontsize=16, fontweight="bold"
-    )  # Increased from 12
-    plt.xlabel("Months", fontsize=14)  # Increased from 10
-    plt.ylabel("Value", fontsize=14)  # Increased from 10
-    plt.xticks(rotation=45, fontsize=12)  # Added fontsize
-    plt.yticks(fontsize=12)  # Added fontsize
-    plt.grid(True, linestyle=":", alpha=0.7)
-    plt.legend(fontsize=12)  # Added fontsize to legend
-
-plt.suptitle(
-    "Marketing Channel Performance Alongside ESP and Sage Spend",
-    fontsize=20,  # Increased from 16
-    fontweight="bold",
-    y=0.95,  # Adjusted position of main title
-)
-
-# Ensure output directory exists
-os.makedirs(output_dir, exist_ok=True)
-
-# Save the figure with higher DPI
-plt.savefig(output_path, bbox_inches="tight", dpi=400)  # Increased DPI from 300
-print(f"File saved to: {output_path}")
+    # Save each page as a separate file
+    output_filename = f"{base_filename}_page{page+1}.png"
+    output_path = os.path.join(output_dir, output_filename)
+    plt.savefig(output_path, bbox_inches="tight", dpi=400)
+    plt.close()  # Close the figure to free memory
+    print(f"Saved page {page+1} to: {output_path}")
 
 # Print summary statistics for each channel
 print("\nPerformance Summary by Channel:")
