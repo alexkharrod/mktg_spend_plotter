@@ -4,6 +4,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.backends.backend_pdf import PdfPages  # Add this import
 
 # Full file path for input and output
 input_file_path = "/Users/alexharrod/Library/CloudStorage/Dropbox/LogoIncluded/Marketing/2025 Marketing Digital Marketing Tracker.xlsx"
@@ -46,14 +47,19 @@ first_date = str(month_columns[0])
 # Debug print to see what date we're starting with
 print("Original date from DataFrame:", first_date)
 
-# Create base output filename with forced 2025 year
+# Create output filename with forced 2025 year
 try:
     date_obj = pd.to_datetime(first_date)
     month = date_obj.month
-    base_filename = f"adspend_vs_category_sales_{month:02d}-2025"
+    output_filename = (
+        f"adspend_vs_category_sales_{month:02d}-2025.pdf"  # Changed to .pdf
+    )
 except Exception as e:
     print(f"Date parsing error: {e}")
-    base_filename = "adspend_vs_category_sales"
+    output_filename = "adspend_vs_category_sales.pdf"  # Changed to .pdf
+
+# Full output path
+output_path = os.path.join(output_dir, output_filename)
 
 # Prepare months for x-axis
 months = data_df.index
@@ -62,72 +68,74 @@ months = data_df.index
 charts_per_page = 2
 total_pages = (len(rows_to_track) + charts_per_page - 1) // charts_per_page
 
-# Create separate pages with 2 charts each
-for page in range(total_pages):
-    plt.figure(figsize=(20, 24))  # Adjusted for 2 charts per page
-    plt.subplots_adjust(hspace=0.3)
+# Create PDF with multiple pages
+with PdfPages(output_path) as pdf:
+    # Create separate pages with 2 charts each
+    for page in range(total_pages):
+        plt.figure(figsize=(20, 24))  # Adjusted for 2 charts per page
+        plt.subplots_adjust(hspace=0.3)
 
-    # Process 2 charts for current page
-    for i in range(charts_per_page):
-        chart_index = page * charts_per_page + i
-        if chart_index < len(rows_to_track):
-            channel = rows_to_track[chart_index]
+        # Process 2 charts for current page
+        for i in range(charts_per_page):
+            chart_index = page * charts_per_page + i
+            if chart_index < len(rows_to_track):
+                channel = rows_to_track[chart_index]
 
-            plt.subplot(2, 1, i + 1)
+                plt.subplot(2, 1, i + 1)
 
-            # Plot the specific channel's performance
-            plt.plot(
-                months,
-                data_df[channel],
-                marker="o",
-                label=channel,
-                color="red",
-                linewidth=3,
-            )
+                # Plot the specific channel's performance
+                plt.plot(
+                    months,
+                    data_df[channel],
+                    marker="o",
+                    label=channel,
+                    color="red",
+                    linewidth=3,
+                )
 
-            # Plot ESP and Sage Spend
-            plt.plot(
-                months,
-                data_df["ESP Spend"],
-                marker="o",
-                label="ESP Spend",
-                color="blue",
-                linestyle="--",
-                linewidth=3,
-            )
-            plt.plot(
-                months,
-                data_df["Sage Spend"],
-                marker="o",
-                label="Sage Spend",
-                color="green",
-                linestyle="--",
-                linewidth=3,
-            )
+                # Plot ESP and Sage Spend
+                plt.plot(
+                    months,
+                    data_df["ESP Spend"],
+                    marker="o",
+                    label="ESP Spend",
+                    color="blue",
+                    linestyle="--",
+                    linewidth=3,
+                )
+                plt.plot(
+                    months,
+                    data_df["Sage Spend"],
+                    marker="o",
+                    label="Sage Spend",
+                    color="green",
+                    linestyle="--",
+                    linewidth=3,
+                )
 
-            plt.title(
-                f"{channel} Performance with Spend", fontsize=18, fontweight="bold"
-            )
-            plt.xlabel("Months", fontsize=16)
-            plt.ylabel("Value", fontsize=16)
-            plt.xticks(rotation=45, fontsize=14)
-            plt.yticks(fontsize=14)
-            plt.grid(True, linestyle=":", alpha=0.7)
-            plt.legend(fontsize=14)
+                plt.title(
+                    f"{channel} Performance with Spend", fontsize=18, fontweight="bold"
+                )
+                plt.xlabel("Months", fontsize=16)
+                plt.ylabel("Value", fontsize=16)
+                plt.xticks(rotation=45, fontsize=14)
+                plt.yticks(fontsize=14)
+                plt.grid(True, linestyle=":", alpha=0.7)
+                plt.legend(fontsize=14)
 
-    plt.suptitle(
-        "Marketing Channel Performance Alongside ESP and Sage Spend",
-        fontsize=22,
-        fontweight="bold",
-        y=0.95,
-    )
+        plt.suptitle(
+            "Marketing Channel Performance Alongside ESP and Sage Spend",
+            fontsize=22,
+            fontweight="bold",
+            y=0.95,
+        )
 
-    # Save each page as a separate file
-    output_filename = f"{base_filename}_page{page+1}.png"
-    output_path = os.path.join(output_dir, output_filename)
-    plt.savefig(output_path, bbox_inches="tight", dpi=400)
-    plt.close()  # Close the figure to free memory
-    print(f"Saved page {page+1} to: {output_path}")
+        # Save the current page to PDF
+        pdf.savefig(bbox_inches="tight")
+        plt.close()  # Close the figure to free memory
+        print(f"Added page {page+1} to PDF")
+
+print(f"PDF saved to: {output_path}")
 
 # Print summary statistics for each channel
 print("\nPerformance Summary by Channel:")
